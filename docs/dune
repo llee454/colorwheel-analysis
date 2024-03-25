@@ -1,0 +1,13 @@
+(rule
+  (targets data.json)
+  (deps %{project_root}/src/main.exe)
+  (action (bash "
+    %{project_root}/src/main.exe > data.json
+  "))
+)
+(rule
+  (targets essay_out.md)
+  (deps essay.md data.json)
+  (action (bash "amina --init=init.scm --template=essay.md < data.json > essay_out.md"))
+  (mode promote)
+)

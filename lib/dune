@@ -1,0 +1,12 @@
+(library
+  (name lib)
+  (libraries
+    core
+  )
+  (inline_tests)
+  (preprocess (pps
+    ppx_jane
+    ppx_deriving_yojson
+    ppx_expect
+  ))
+)

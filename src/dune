@@ -1,0 +1,14 @@
+(executable
+ (name main)
+ (public_name colorwheel)
+ (libraries
+   core
+   eio_main
+   lib
+ )
+  (preprocess (pps
+    ppx_jane
+    ppx_deriving_yojson
+  ))
+  (modes exe)
+)

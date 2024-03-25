@@ -1,0 +1,3 @@
+pin-depends: [
+ ["amina.1.0.0" "git+https://github.com/llee454/amina.git#eio"]
+]
