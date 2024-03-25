@@ -43,7 +43,7 @@
     [(prec x)
      (letrec*
        [(y (inexact->exact (if (< x 0) (ceiling x) (floor x))))
-        (prefix (if (< y 0) "-" ""))
+        (prefix (if (< x 0) "-" ""))
         (y0 (abs y))
         (x0 (abs x))
         (aux (lambda (x)
@@ -96,42 +96,7 @@
       [else (string-append (car ss) ", " (comma-delimited (cdr ss)))])]
     [(ss) (comma-delimited "and" ss)]))
 
-; Accepts a string such as "Jan" that represents a three letter month name and
-; returns the corresponding month number.
-(define (month->number month)
-  (cond
-    [(string=? "Jan" month) 1]
-    [(string=? "Feb" month) 2]
-    [(string=? "Mar" month) 3]
-    [(string=? "Apr" month) 4]
-    [(string=? "May" month) 5]
-    [(string=? "Jun" month) 6]
-    [(string=? "Jul" month) 7]
-    [(string=? "Aug" month) 8]
-    [(string=? "Sep" month) 9]
-    [(string=? "Oct" month) 10]
-    [(string=? "Nov" month) 11]
-    [(string=? "Dec" month) 12]
-    [else (error "[month->number] Error: an error occured ")]
-))
-
-(define (month>? x y) (> (month->number x) (month->number y)))
-
-; Accepts two month-year pairs of the form (month . year) and returns true iff
-; the first month-year is larger than (after) the second.
-(define (month-year>? x y)
-  (cond
-    [(> (cdr x) (cdr y)) #t]
-    [(= (cdr x) (cdr y))
-      (month>? (car x) (car y))]
-    [else #f]))
-
-; Accepts a list of month-year pairs of the form (month . year) and sorts the
-; list so that the earliest events will occur last.
-(define (sort-month-years xs)
-  (sort xs month-year>?))
-
-; Accepts a list of month-year pairs of the form (month . year) and sorts the
-; list so that the earliest events will occur first.
-(define (sort-month-years-rev xs)
-  (sort xs (lambda (a b) (month-year>? b a))))
+; Accepts a weight of evidence measured in "nats" to the weight of
+; evidence measured in the convience units of "aminas." 0.75 nats equals
+; 1 amina.
+(define (nats->aminas x) (/ x 0.75))

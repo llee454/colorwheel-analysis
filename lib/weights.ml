@@ -1,10 +1,10 @@
 open! Core
 
 module Estimate = struct
-  type t = {
-    lower: float;
-    middle: float;
-    upper: float;
+  type 'a t = {
+    lower: 'a;
+    middle: 'a;
+    upper: 'a;
   }
   [@@deriving to_yojson]
 end
@@ -24,8 +24,17 @@ module Probabiliy_class = struct
     | Blue -> { lower = 0.95; middle = 0.975; upper = 1.0 }
     | Green -> { lower = 0.8; middle = 0.875; upper = Float.(0.95 - epsilon_float) }
     | Yellow -> Float.{ lower = 0.2 + epsilon_float; middle = 0.5; upper = 0.8 - epsilon_float }
-    | Orange -> { lower = Float.(0.5 + epsilon_float); middle = 0.125; upper = 0.2 }
-    | Red -> { lower = 0.0; middle = 0.025; upper = 0.5 }
+    | Orange -> { lower = Float.(0.05 + epsilon_float); middle = 0.125; upper = 0.2 }
+    | Red -> { lower = 0.0; middle = 0.025; upper = 0.05 }
+
+  let get_class =
+    let open Float in
+    function
+    | x when x <= 0.05 -> Red
+    | x when x <= 0.2 -> Orange
+    | x when x >= 0.95 -> Blue
+    | x when x >= 0.8 -> Green
+    | _ -> Yellow
 
   let get_probability_classes = [| Blue; Green; Yellow; Orange; Red |]
 end
@@ -102,22 +111,54 @@ let get_needed_weights () =
   )
 
 (**
-  Accepts three arguments:
+  Accepts two arguments:
   * P(H) - the probability of the hypothesis being true before the new
     evidence
-  * P(not H) - the probability of the hypothesis being false before
-    the new evidence
   * w - the weight of the new evidence
   and returns the probability that the hypothesis is true given the
   new evidence.
 *)
-let get_posterior ph pnh w =
+let get_posterior ph w =
   let open Float in
-  (1.0 + (exp (-w) * pnh / ph)) ** -1.0
+  (1.0 + (exp (-w) * (1.0 - ph) / ph)) ** -1.0
 
 let%expect_test "get_posterior" =
-  printf !"%{sexp: float}" (get_posterior 0.2 0.8 1.3863);
+  printf !"%{sexp: float}" (get_posterior 0.2 1.3863);
   [%expect {| 0.50000140972002738 |}]
+
+(**
+  Aminas are a convienence unit for measuring evidential weight. Each
+  Amina equals 0.75 nats worth of evidential weight.
+
+  The meaninful range of evidential weight is betwing -7.5 and 7.5
+  nats, so this unit produces weight scores typically ranging beting
+  -10 and 10.
+*)
+let amina_const = 0.75
+
+let aminas_to_nats x = Float.(x * amina_const)
+let nats_to_aminas w = Float.(w / amina_const)
+
+(**
+  Returns an array listing the possible combinations of probability classes and evidential weights (in Amina's).
+*)
+let get_posteriors () =
+  let open Probabiliy_class in
+  Array.concat_map get_probability_classes ~f:(fun h ->
+      Array.init 21 ~f:(fun i ->
+          let x = i - 10 in
+          let w = aminas_to_nats (Float.of_int x) in
+          let ph = get_values h in
+          ( h,
+            x,
+            Estimate.
+              {
+                lower = get_class @@ get_posterior ph.lower w;
+                middle = get_class @@ get_posterior ph.middle w;
+                upper = get_class @@ get_posterior ph.upper w;
+              } )
+      )
+  )
 
 (**
   Accepts three arguments:
